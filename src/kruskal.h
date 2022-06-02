@@ -1,71 +1,26 @@
-#define M 20
+#ifndef __KRUSKAL_H__
+#define __KRUSKAL_H__
+#include <stdio.h>
+#include <stdlib.h>
+#include "common.h"
+#include "quicksort.h"
 
-int parent[M], rank[M];
+#define M 1000
 
-typedef struct MAKESET
-{
-	MakeSetStructure *p;
-    int rank;
-} MakeSetStructure;
+int rank[M];
+int parent[M];
 
-typedef struct EDGE
-{
-	int u;
-	int v;
-	int w;
-} Edge;
-
-typedef struct GRAPH
-{
-	int n_nodes;
-	int n_edges;
-	int i_edge;
-	Edge *edges;
-} Graph;
-
-void swap(Edge *x, Edge *y)
-{
-	Edge temp;
-	temp = *x;
-	*x = *y;
-	*y = temp;
-}
-
-void printMST(Edge *T, int n)
+//*
+void printMST(Aresta *T, int n)
 {
 	int i, cost = 0;
-	printf("Selected Edges:\nu  v  w\n");
+	printf("Selected Edges:\no   d   c\n");
 	for (i = 0; i < n; i++)
 	{
-		printf("%d  %d  %d\n", T[i].u, T[i].v, T[i].w);
-		cost += T[i].w;
+		printf("%d  %d  %d\n", T[i].vertice_origem, T[i].vertice_destino, T[i].custo);
+		cost += T[i].custo;
 	}
-	printf("\nCost = %d", cost);
-}
-
-int partition(Edge *A, int beg, int end)
-{
-	int i, p = beg, pivot = A[end].w;
-	for (i = beg; i < end; i++)
-	{
-		if (A[i].w <= pivot)
-		{
-			swap(&A[i], &A[p]);
-			p++;
-		}
-	}
-	swap(&A[end], &A[p]);
-	return p;
-}
-
-void QuickSort(Edge *A, int beg, int end)
-{
-	int q;
-	if (beg >= end)
-		return;
-	q = partition(A, beg, end);
-	QuickSort(A, beg, q - 1);
-	QuickSort(A, q + 1, end);
+	printf("Cost = %d\n", cost);
 }
 
 int find(int u)
@@ -101,7 +56,8 @@ void unionbyrank(int u, int v)
 		rank[y]++;
 	}
 }
-
+// */
+/*
 void Kruskal(Edge *E, int n, int e)
 {
 	int i, j, x, y, u, v;
@@ -128,3 +84,63 @@ void Kruskal(Edge *E, int n, int e)
 
 	printMST(T, n - 1);
 }
+*/
+void pre_kruskal(int n_nodes, int n_edges)
+{
+	for (int i = 0; i < M; i++) rank[i] = 0;
+	for (int i = 0; i < M; i++) parent[i] = i;
+}
+
+typedef struct CHAIN
+{
+	int vertice;
+	int custo;
+	struct Chain *proximo;
+} Chain;
+
+void matriz_adjacencias(Aresta *E, int n_nodes, int n_edges)
+{
+	Chain* vertices = (Chain *)malloc(n_nodes * sizeof(Chain));
+	for (int n_edge = 0; n_edge < n_edges; n_edge++) {
+		int vertice_origem = (&E[n_edge])->vertice_origem;
+		int vertice_destino = (&E[n_edge])->vertice_destino;
+		int custo = (&E[n_edge])->custo;
+		// ((Chain *) &vertices[vertice_origem])->
+	}
+	
+	// for (int n_edge = 0; n_edge < n_edges; n_edge++)
+	// {
+	// }
+
+}
+void kruskal(Aresta *E, int n_nodes, int n_edges)
+{
+	int vertice_origem, vertice_destino, origem, destino, custo;
+	quicksort(E, 0, n_edges - 1);
+	int n_node_t = 0;
+	printf("arestas: %04d \n", n_edges);
+	for (int n_edge = 0; n_edge < n_edges; n_edge++)
+	{
+		if (n_node_t == (n_nodes - 1)) break;
+		vertice_origem = (E+n_edge)->vertice_origem;
+		vertice_destino = (E+n_edge)->vertice_destino;
+		custo = (E+n_edge)->custo;
+
+		origem = find(vertice_origem);
+		destino = find(vertice_destino);
+
+		printf("%04d - find(%d) = %d - find(%d) = %d \n", n_edge, vertice_origem, origem, vertice_destino, destino);
+
+		// printf("%04d - origem:%d destino:%d custo:%d -- ", n_edge, vertice_origem, vertice_destino, custo);
+		// printf("%04d - origem:%d destino:%d \n", n_edge, origem, destino, custo);
+
+		if (origem != destino) 
+		{
+			unionbyrank(origem, destino);
+			n_node_t++;
+		}
+	}
+	// for (int i = 0; i < n_nodes; i++) printf("%d ", parent[i]);
+	// printf("\n");
+}
+#endif

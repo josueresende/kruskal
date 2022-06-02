@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+#include "common.h"
 #include "resource.h"
 
 void write()
@@ -53,28 +54,3 @@ void read()
 	fclose(fp);
 */ }
 
-FileSet* open(char *filename) 
-{
-	printf("file: %s\n", filename);
-	FileSet* fileSet = (FileSet *)malloc(sizeof(FileSet));
-	{
-		clock_t start = clock();
-		read_from_text(fileSet, filename);
-		clock_t end = clock();
-		double elapsed = (double)(end - start) / CLOCKS_PER_SEC;
-		printf("read_from_text: time measured: %.3f seconds.\n", elapsed);
-	}
-	printf("%d graphs \n", fileSet->n_graphs);
-	/*
-	for (int g = 0; g < fileSet->n_graphs; g++)
-	{
-		printf("%d nodes \n", (&fileSet->graphs[g])->n_nodes);
-		printf("%d edges \n", (&fileSet->graphs[g])->n_edges);
-		Graph *graph = (Graph *)(&fileSet->graphs[g]);
-		for (int e = 0; e < graph->n_edges; e++)
-		{
-			printf("%04d - u:%d v:%d w:%d \n", e, (&graph->edges[e])->u, (&graph->edges[e])->v, (&graph->edges[e])->w);
-		}
-	} // */
-    return fileSet;
-}
