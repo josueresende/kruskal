@@ -213,7 +213,9 @@ void _union_by_rank(int u, int v, int parent[], int rank[])
 }
 int _find(int parent[], int i)
 {
+    printf("find %d \n", i);
     if (parent[i] == -1) return i;
+    if (parent[i] == i) return i;
     return _find(parent, parent[i]);
 }
 void _union(int parent[], int x, int y) 
@@ -233,7 +235,7 @@ void print_rank(int n_nodes) {
     printf("\n");
 
 }
-void kruskal(Aresta *E, int n_nodes, int n_edges, int parent[], int rank[])
+void kruskal(Aresta *E, int n_nodes, int n_edges)
 {
 	quicksort(E, 0, n_edges - 1);
 
@@ -247,46 +249,22 @@ void kruskal(Aresta *E, int n_nodes, int n_edges, int parent[], int rank[])
 		vertice_destino = E[n_edge]._destino;
 		custo = E[n_edge]._custo;
 
-        if (rank == NULL) {
-            origem = _find(parent, vertice_origem);
-            destino = _find(parent, vertice_destino);
-            printf("find(%d) = %d ", vertice_origem, origem);
-            printf("find(%d) = %d ", vertice_destino, destino);
-            printf("\n");
-            if (origem != destino) 
-            {
-                printf("Vertices in different trees. Add edge to tree: Union(%d, %d) \n", origem, destino);
-                _union(parent, origem, destino);
-                n_node_t++;
-            } else {
-                printf("Vertices in the same tree. Skip edge \n");
-            }
-        } else {
-            origem = _find(parent, vertice_origem);
-            destino = _find(parent, vertice_destino);
-            printf("find(%d) = %d ", vertice_origem, origem);
-            printf("find(%d) = %d ", vertice_destino, destino);
-            printf("\n");
-            if (origem != destino) 
-            {
-                printf("Vertices in different trees. Add edge to tree: Union(%d, %d) \n", origem, destino);
-                _union(parent, origem, destino);
-                n_node_t++;
-            } else {
-                printf("Vertices in the same tree. Skip edge \n");
-            }
-        }
+        origem = _find(parent, vertice_origem);
+        destino = _find(parent, vertice_destino);
 
+        printf("find(%d) = %d ", vertice_origem, origem);
+        printf("find(%d) = %d ", vertice_destino, destino);
+        printf("\n");
 
         if (origem != destino) 
         {
-            // printf("Vertices in different trees. Add edge to tree: Union(%d, %d) \n", origem, destino);
-            // unionbyrank(n_nodes, origem, destino);
+            printf("Vertices in different trees. Add edge to tree: Union(%d, %d) \n", origem, destino);
             _union(parent, origem, destino);
             n_node_t++;
-        // } else {
-        //     printf("Vertices in the same tree. Skip edge \n");
+        } else {
+            printf("Vertices in the same tree. Skip edge \n");
         }
+
 	}
 }
 
@@ -319,10 +297,10 @@ int main()
 
         int n_nodes = dataset[nb_dataset].grafos[nb_graph].nb_nodes;
 
-        parent = malloc(n_nodes * sizeof(int));
-        for (int i = 0; i < n_nodes; i++) parent[i] = -1;
         rank = malloc(n_nodes * sizeof(int));
         for (int i = 0; i < n_nodes; i++) rank[i] = 0;
+        parent = malloc(n_nodes * sizeof(int));
+        for (int i = 0; i < n_nodes; i++) parent[i] = -1;
 
         // print_rank(n_nodes);
 
