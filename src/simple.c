@@ -34,6 +34,13 @@ typedef struct DATASET
 int *parent;
 int *rank;
 
+double get_time_in_seconds()
+{
+    struct timespec t;
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t);
+    return (double)t.tv_sec + 1.0e-9 * t.tv_nsec;
+}
+
 int compare(const char *left, char *right) 
 {
 	return strncmp(left, right, strlen(left));
@@ -235,8 +242,6 @@ void print_rank(int n_nodes) {
 }
 void kruskal(Aresta *E, int n_nodes, int n_edges)
 {
-	quicksort(E, 0, n_edges - 1);
-
 	int vertice_origem, vertice_destino, origem, destino, custo;
 
 	int n_node_t = 0;
@@ -250,17 +255,17 @@ void kruskal(Aresta *E, int n_nodes, int n_edges)
         origem = _find(parent, vertice_origem);
         destino = _find(parent, vertice_destino);
 
-        printf("find(%d) = %d ", vertice_origem, origem);
-        printf("find(%d) = %d ", vertice_destino, destino);
-        printf("\n");
+        // printf("find(%d) = %d ", vertice_origem, origem);
+        // printf("find(%d) = %d ", vertice_destino, destino);
+        // printf("\n");
 
         if (origem != destino) 
         {
-            printf("Vertices in different trees. Add edge to tree: Union(%d, %d) \n", origem, destino);
+            // printf("Vertices in different trees. Add edge to tree: Union(%d, %d) \n", origem, destino);
             _union(parent, origem, destino);
             n_node_t++;
-        } else {
-            printf("Vertices in the same tree. Skip edge \n");
+        // } else {
+            // printf("Vertices in the same tree. Skip edge \n");
         }
 
 	}
@@ -300,13 +305,21 @@ int main()
         parent = malloc(n_nodes * sizeof(int));
         for (int i = 0; i < n_nodes; i++) parent[i] = -1;
 
-        // print_rank(n_nodes);
+    	quicksort(
+            dataset[nb_dataset].grafos[nb_graph].arestas,
+            0,
+            dataset[nb_dataset].grafos[nb_graph].nb_edges - 1
+        );
 
+        double start = get_time_in_seconds();
         kruskal(
             dataset[nb_dataset].grafos[nb_graph].arestas,
             dataset[nb_dataset].grafos[nb_graph].nb_nodes,
             dataset[nb_dataset].grafos[nb_graph].nb_edges
         );
+        double end = get_time_in_seconds();
+
+        printf("%f seconds\n", end - start);
 
         print_rank(n_nodes);
 
