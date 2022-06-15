@@ -213,9 +213,7 @@ void _union_by_rank(int u, int v, int parent[], int rank[])
 }
 int _find(int parent[], int i)
 {
-    printf("find %d \n", i);
     if (parent[i] == -1) return i;
-    if (parent[i] == i) return i;
     return _find(parent, parent[i]);
 }
 void _union(int parent[], int x, int y) 
