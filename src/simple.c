@@ -14,7 +14,7 @@ typedef struct ADJACENCIA
 {
 	int _destino;
 	int _custo;
-    struct Adjacencia* proximo;
+    struct ADJACENCIA *proximo;
 } Adjacencia;
 
 typedef struct GRAPH
@@ -203,6 +203,11 @@ int find(int n, int u)
 	}
 	return u;
 }
+int _find(int parent[], int i)
+{
+    if (parent[i] == -1) return i;
+    return _find(parent, parent[i]);
+}
 void _union_by_rank(int u, int v, int parent[], int rank[])
 {
 	int x, y;
@@ -217,11 +222,6 @@ void _union_by_rank(int u, int v, int parent[], int rank[])
 		parent[x] = y;
 		rank[y]++;
 	}
-}
-int _find(int parent[], int i)
-{
-    if (parent[i] == -1) return i;
-    return _find(parent, parent[i]);
 }
 void _union(int parent[], int x, int y) 
 {
@@ -292,7 +292,7 @@ int main()
                         printf("[%d] %d", (*adjacencia)._destino, (*adjacencia)._custo);
                         if ((*adjacencia).proximo != NULL) printf(" -> ");
                     }
-                    adjacencia = (*adjacencia).proximo;
+                    adjacencia = ((*adjacencia).proximo);
                 }
                 printf("\n");
             }
