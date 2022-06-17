@@ -7,11 +7,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
-
-class Instancia {
-    public int[][] grafo;
-    public int n_nodes; 
-}
+import java.util.ArrayList;
+import java.util.List;
 
 public class Kruskal {
 
@@ -111,8 +108,8 @@ public class Kruskal {
         quicksort(dados, x, q - 1);
         quicksort(dados, q + 1, y);
     }
-    static public int[][][] carregar_dados(String arquivo) {
-        int[][][] dados = null;
+    static public List<Instancia> carregar_dados(String arquivo) {
+        List<Instancia> instancias = new ArrayList<Instancia>();
         try {
             int graph = -1;
             int index = 0;
@@ -129,7 +126,7 @@ public class Kruskal {
                     break;
                 if (line.startsWith("NB_GRAPHS")) {
                     int total = Integer.parseInt(line.substring(10).trim());
-                    dados = new int[total][][];
+                    instancias.add(new Instancia());
                     continue;
                 }
                 if (line.startsWith("UNDIRECTED GRAPH")) {
@@ -138,7 +135,7 @@ public class Kruskal {
                     continue;
                 }
                 if (line.startsWith("LIST_OF_EDGES")) {
-                    dados[graph] = new int[edges][];
+                    instancias.get(graph).arestas = new int[edges][];
                     index = 0;
                     continue;
                 }
@@ -170,12 +167,15 @@ public class Kruskal {
                                 valores[x] = Integer.parseInt(line.substring(m, n).trim());
                             }
                         }
-                        dados[graph][index++] = valores;
+                        instancias.get(graph).arestas[index++] = valores;
                     }
-                    if (line.startsWith("NB_NODES"))
+                    if (line.startsWith("NB_NODES")) {
                         nodes = Integer.parseInt(line.substring(10).trim());
-                    if (line.startsWith("NB_EDGES"))
+                        instancias.get(graph).n_nodes = nodes;
+                    }
+                    if (line.startsWith("NB_EDGES")) {
                         edges = Integer.parseInt(line.substring(10).trim());
+                    }
                 } catch (Exception e) {
                     System.out.println(line);
                     e.printStackTrace();
@@ -191,7 +191,7 @@ public class Kruskal {
         } finally {
             System.out.println("Arquivo " + arquivo + " carregado.");
         }
-        return dados;
+        return instancias;
     }
 
     static public void imprimir(int[] numeros) {
