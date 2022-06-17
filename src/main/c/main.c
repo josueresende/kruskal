@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
-
+#define TURNS 1
 typedef struct ARESTA
 {
     int _origem;
@@ -12,6 +12,8 @@ typedef struct ARESTA
 
 typedef struct GRAPH
 {
+    double start;
+    double end;
     int nb_edges; // arestas
     int nb_nodes; // vertices
     Aresta *arestas;
@@ -105,6 +107,7 @@ Dataset *abrir(char *nomeDoArquivo)
                 int origem = (*aresta)._origem;
                 int destino = (*aresta)._destino;
                 int custo = (*aresta)._custo;
+                free(reffub);
             }
             else if (compare("NB_GRAPHS", buffer) == 0)
             {
@@ -206,7 +209,7 @@ void _union_by_rank(int u, int v, int parent[], int rank[])
         rank[y]++;
     }
 }
-void _union(int parent[], int x, int y)
+void _union_find(int parent[], int x, int y)
 {
     int xset = _find(parent, x);
     int yset = _find(parent, y);
@@ -225,7 +228,37 @@ void print_rank(int n_nodes)
         printf("%3d ", rank[i]);
     printf("\n");
 }
-void kruskal(Aresta *E, int n_nodes, int n_edges)
+void kruskal_union_by_rank(Aresta *E, int n_nodes, int n_edges)
+{
+    int vertice_origem, vertice_destino, origem, destino, custo;
+
+    int n_node_t = 0;
+    for (int n_edge = 0; n_edge < n_edges; n_edge++)
+    {
+        if (n_node_t == (n_nodes - 1))
+            break;
+        vertice_origem = E[n_edge]._origem;
+        vertice_destino = E[n_edge]._destino;
+        custo = E[n_edge]._custo;
+
+        origem = _find(parent, vertice_origem);
+        destino = _find(parent, vertice_destino);
+
+        printf("find(%d) = %d ", vertice_origem, origem);
+        printf("find(%d) = %d ", vertice_destino, destino);
+        printf("\n");
+
+        if (origem != destino)
+        {
+            // printf("Vertices in different trees. Add edge to tree: Union(%d, %d) \n", origem, destino);
+            _union_by_rank(origem, destino, parent, rank);
+            n_node_t++;
+            // } else {
+            // printf("Vertices in the same tree. Skip edge \n");
+        }
+    }
+}
+void kruskal_union_find(Aresta *E, int n_nodes, int n_edges)
 {
     int vertice_origem, vertice_destino, origem, destino, custo;
 
@@ -248,63 +281,150 @@ void kruskal(Aresta *E, int n_nodes, int n_edges)
         if (origem != destino)
         {
             // printf("Vertices in different trees. Add edge to tree: Union(%d, %d) \n", origem, destino);
-            _union(parent, origem, destino);
+            _union_find(parent, origem, destino);
             n_node_t++;
             // } else {
             // printf("Vertices in the same tree. Skip edge \n");
         }
     }
 }
-void run(char *nomeDoArquivo)
+void run(char *nomeDoArquivo, char *nomeDaInstancia)
 {
-    Dataset *dataset = abrir(nomeDoArquivo);
-
-    int nb_dataset = 0;
-    for (int nb_graph = 0; nb_graph < dataset[0].nb_graphs; nb_graph++)
     {
-        int n_nodes = dataset[nb_dataset].grafos[nb_graph].nb_nodes;
+        Dataset *dataset = abrir(nomeDoArquivo);
+        int nb_dataset = 0;
+        for (int nb_graph = 0; nb_graph < dataset[0].nb_graphs; nb_graph++)
+        {
+            int n_nodes = dataset[nb_dataset].grafos[nb_graph].nb_nodes;
 
-        rank = malloc(n_nodes * sizeof(int));
-        for (int i = 0; i < n_nodes; i++)
-            rank[i] = 0;
-        parent = malloc(n_nodes * sizeof(int));
-        for (int i = 0; i < n_nodes; i++)
-            parent[i] = -1;
+            double soma = 0;
+            for (int turn = 0; turn < TURNS; turn++)
+            {
+                rank = malloc(n_nodes * sizeof(int));
+                for (int i = 0; i < n_nodes; i++)
+                    rank[i] = 0;
+                parent = malloc(n_nodes * sizeof(int));
+                for (int i = 0; i < n_nodes; i++)
+                    parent[i] = -1;
 
-        quicksort(
-            dataset[nb_dataset].grafos[nb_graph].arestas,
-            0,
-            dataset[nb_dataset].grafos[nb_graph].nb_edges - 1);
+                quicksort(
+                    dataset[nb_dataset].grafos[nb_graph].arestas,
+                    0,
+                    dataset[nb_dataset].grafos[nb_graph].nb_edges - 1);
 
-        double start = get_time_in_seconds();
-        kruskal(
-            dataset[nb_dataset].grafos[nb_graph].arestas,
-            dataset[nb_dataset].grafos[nb_graph].nb_nodes,
-            dataset[nb_dataset].grafos[nb_graph].nb_edges);
-        double end = get_time_in_seconds();
+                dataset[nb_dataset].grafos[nb_graph].start = get_time_in_seconds();
+                kruskal_union_find(
+                    dataset[nb_dataset].grafos[nb_graph].arestas,
+                    dataset[nb_dataset].grafos[nb_graph].nb_nodes,
+                    dataset[nb_dataset].grafos[nb_graph].nb_edges
+                );
+                dataset[nb_dataset].grafos[nb_graph].end = get_time_in_seconds();
+                double delta = (dataset[nb_dataset].grafos[nb_graph].end - dataset[nb_dataset].grafos[nb_graph].start);
+                soma += delta;
+                free(rank);
+                free(parent);
+            }
+            double delta = soma / TURNS;
 
-        printf("ARQUIVO %s | GRAPH %d/%d | ARESTAS %d | VERTICES %d | %f segundos \n",
-               nomeDoArquivo,
-               (nb_graph + 1),
-               dataset[0].nb_graphs,
-               dataset[nb_dataset].grafos[nb_graph].nb_edges,
-               dataset[nb_dataset].grafos[nb_graph].nb_nodes,
-               end - start);
+            // printf("ARQUIVO %s | GRAPH %d/%d | ARESTAS %d | VERTICES %d | %f segundos \n",
+            //        nomeDoArquivo,
+            //        (nb_graph + 1),
+            //        dataset[0].nb_graphs,
+            //        dataset[nb_dataset].grafos[nb_graph].nb_edges,
+            //        dataset[nb_dataset].grafos[nb_graph].nb_nodes,
+            //        delta);
+            printf("\"%s_%d_%d\", %d, %d, %f, \"%s\", %d \n",
+                nomeDaInstancia,
+                dataset[0].nb_graphs,
+                (nb_graph + 1),
+                dataset[nb_dataset].grafos[nb_graph].nb_nodes,
+                dataset[nb_dataset].grafos[nb_graph].nb_edges,
+                delta,
+                "union-find",
+                0);
 
-        // print_rank(n_nodes);
+            // print_rank(n_nodes);
+        }
+        free(dataset);
     }
+    {
+        Dataset *dataset = abrir(nomeDoArquivo);
+        int nb_dataset = 0;
+        for (int nb_graph = 0; nb_graph < dataset[0].nb_graphs; nb_graph++)
+        {
+            int n_nodes = dataset[nb_dataset].grafos[nb_graph].nb_nodes;
+
+            double soma = 0;
+            for (int turn = 0; turn < TURNS; turn++)
+            {
+                rank = malloc(n_nodes * sizeof(int));
+                for (int i = 0; i < n_nodes; i++)
+                    rank[i] = i;
+                parent = malloc(n_nodes * sizeof(int));
+                for (int i = 0; i < n_nodes; i++)
+                    parent[i] = -1;
+
+                quicksort(
+                    dataset[nb_dataset].grafos[nb_graph].arestas,
+                    0,
+                    dataset[nb_dataset].grafos[nb_graph].nb_edges - 1);
+
+                dataset[nb_dataset].grafos[nb_graph].start = get_time_in_seconds();
+                kruskal_union_by_rank(
+                    dataset[nb_dataset].grafos[nb_graph].arestas,
+                    dataset[nb_dataset].grafos[nb_graph].nb_nodes,
+                    dataset[nb_dataset].grafos[nb_graph].nb_edges
+                );
+                dataset[nb_dataset].grafos[nb_graph].end = get_time_in_seconds();
+                double delta = (dataset[nb_dataset].grafos[nb_graph].end - dataset[nb_dataset].grafos[nb_graph].start);
+                soma += delta;
+                free(rank);
+                free(parent);
+            }
+            double delta = soma / TURNS;
+
+            printf("\"%s_%d_%d\", %d, %d, %f, \"%s\", %d \n",
+                nomeDaInstancia,
+                dataset[0].nb_graphs,
+                (nb_graph + 1),
+                dataset[nb_dataset].grafos[nb_graph].nb_nodes,
+                dataset[nb_dataset].grafos[nb_graph].nb_edges,
+                delta,
+                "union-by-rank",
+                0);
+        }
+        free(dataset);
+    }
+    // {
+    //     int nb_dataset = 0;
+    //     for (int nb_graph = 0; nb_graph < dataset[0].nb_graphs; nb_graph++)
+    //     {
+    //         free(dataset[nb_dataset].grafos[nb_graph].arestas);
+    //     }
+    // }
+    // free(dataset);
 }
 int main()
 {
+    printf("\"instancia\", \"n\", \"m\", \"tempo de execução\", \"complexidade teorica\", \"solucao\"\n");
+
     char nomeDoArquivo[100];
-    for (int i = 1; i <= 10; i++)
+    char nomeDaInstancia[100];
+
+    // sprintf(nomeDoArquivo, "resource/inst_teste.dat");
+    // sprintf(nomeDaInstancia, "Teste");
+    // run(nomeDoArquivo, nomeDaInstancia);
+
+    for (int i = 6; i <= 6; i++)
     {
         sprintf(nomeDoArquivo, "resource/GrafoCompleto/inst_v%d00.dat", i);
-        run(nomeDoArquivo);
+        sprintf(nomeDaInstancia, "GrafoCompleto_%d00", i);
+        run(nomeDoArquivo, nomeDaInstancia);
     }
-    for (int i = 1; i <= 10; i++)
-    {
-        sprintf(nomeDoArquivo, "resource/GrafoEsparso/i%d00gs.txt", i);
-        run(nomeDoArquivo);
-    }
+    // for (int i = 1; i <= 10; i++)
+    // {
+    //     sprintf(nomeDoArquivo, "resource/GrafoEsparso/i%d00gs.txt", i);
+    //     sprintf(nomeDaInstancia, "GrafoEsparso_%d00", i);
+    //     run(nomeDoArquivo, nomeDaInstancia);
+    // }
 }
