@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
-#define TURNS 3
+#define TURNS 1
 typedef struct ARESTA
 {
     int _origem;
@@ -157,7 +157,7 @@ int dividir(Aresta *A, int x, int y)
         {
             troca(&A[i], &A[p]);
             p++;
-        }
+        } 
     }
     troca(&A[y], &A[p]);
     return p;
@@ -170,28 +170,27 @@ void quicksort(Aresta *A, int x, int y)
     quicksort(A, x, q - 1);
     quicksort(A, q + 1, y);
 }
-int find(int n, int u)
-{
-    int i = 0;
-    int A[n];
-    while (u != parent[u])
-    {
-        A[i] = u;
-        u = parent[u];
-        i++;
-    }
-    i--;
-    while (i >= 0)
-    {
-        parent[A[i]] = u;
-        i--;
-    }
-    return u;
-}
+// int find(int n, int u)
+// {
+//     int i = 0;
+//     int A[n];
+//     while (u != parent[u])
+//     {
+//         A[i] = u;
+//         u = parent[u];
+//         i++;
+//     }
+//     i--;
+//     while (i >= 0)
+//     {
+//         parent[A[i]] = u;
+//         i--;
+//     }
+//     return u;
+// }
 int _find(int parent[], int i)
 {
-    if (parent[i] == -1)
-        return i;
+    if (parent[i] == -1) return i;
     return _find(parent, parent[i]);
 }
 void _union_by_rank(int u, int v, int parent[], int rank[])
@@ -209,33 +208,41 @@ void _union_by_rank(int u, int v, int parent[], int rank[])
         rank[y]++;
     }
 }
-void _union_find(int parent[], int x, int y)
+void print(int rank[], int n_nodes)
 {
-    int xset = _find(parent, x);
-    int yset = _find(parent, y);
+    for (int i = 0; i < n_nodes; i++) 
+    {
+        if (rank[i] < 0) continue;
+        printf("%02d-%02d  ", i, rank[i]);
+    }
+    printf("\n");
+}
+void disjointSet_makeSet(int parent[], int n_nodes)
+{
+    for (int i = 0; i < n_nodes; i++)
+        parent[i] = i;
+}
+int disjointSet_find(int parent[], int i)
+{
+    if (parent[i] == i) return i;
+    return disjointSet_find(parent, parent[i]);
+}
+void disjointSet_union(int parent[], int x, int y)
+{
+    int xset = disjointSet_find(parent, x);
+    int yset = disjointSet_find(parent, y);
     parent[xset] = yset;
 }
-void print_rank(int n_nodes)
+Aresta* kruskal_union_by_rank(Aresta *E, int n_nodes, int n_edges)
 {
-    printf("--\n");
-    printf("P ");
-    for (int i = 0; i < n_nodes; i++)
-        printf("%3d ", parent[i]);
-    printf("\n");
+    Aresta *MST = (Aresta*)malloc((n_edges-1)*sizeof(Aresta));
 
-    printf("R ");
-    for (int i = 0; i < n_nodes; i++)
-        printf("%3d ", rank[i]);
-    printf("\n");
-}
-void kruskal_union_by_rank(Aresta *E, int n_nodes, int n_edges)
-{
     int vertice_origem, vertice_destino, origem, destino, custo;
 
-    int n_node_t = 0;
+    int n_edge_t = 0;
     for (int n_edge = 0; n_edge < n_edges; n_edge++)
     {
-        if (n_node_t == (n_nodes - 1))
+        if (n_edge_t == (n_edges - 1))
             break;
         vertice_origem = E[n_edge]._origem;
         vertice_destino = E[n_edge]._destino;
@@ -244,35 +251,39 @@ void kruskal_union_by_rank(Aresta *E, int n_nodes, int n_edges)
         origem = _find(parent, vertice_origem);
         destino = _find(parent, vertice_destino);
 
-        // printf("find(%d) = %d ", vertice_origem, origem);
-        // printf("find(%d) = %d ", vertice_destino, destino);
-        // printf("\n");
-
         if (origem != destino)
         {
-            // printf("Vertices in different trees. Add edge to tree: Union(%d, %d) \n", origem, destino);
             _union_by_rank(origem, destino, parent, rank);
-            n_node_t++;
-            // } else {
-            // printf("Vertices in the same tree. Skip edge \n");
+            MST[n_edge_t++] = E[n_edge];
         }
     }
+    printf("MST UBR ");
+    for (int n_edge = 0; n_edge < n_edge_t; n_edge++)
+    {
+        printf("%d-%d=%d | ", MST[n_edge]._origem, MST[n_edge]._destino, MST[n_edge]._custo);
+    }
+    printf("\n");
+    return MST;
 }
-void kruskal_union_find(Aresta *E, int n_nodes, int n_edges)
+Aresta* kruskal_union_find(Aresta *E, int n_nodes, int n_edges)
 {
+    Aresta *MST = (Aresta*)malloc((n_edges-1)*sizeof(Aresta));
+
     int vertice_origem, vertice_destino, origem, destino, custo;
 
-    int n_node_t = 0;
+    int n_edge_t = 0;
     for (int n_edge = 0; n_edge < n_edges; n_edge++)
     {
-        if (n_node_t == (n_nodes - 1))
+        if (n_edge_t == (n_edges - 1))
             break;
         vertice_origem = E[n_edge]._origem;
         vertice_destino = E[n_edge]._destino;
         custo = E[n_edge]._custo;
 
-        origem = _find(parent, vertice_origem);
-        destino = _find(parent, vertice_destino);
+        origem = disjointSet_find(parent, vertice_origem);
+        destino = disjointSet_find(parent, vertice_destino);
+
+        // printf("borda %d-%d => %d \n", vertice_origem, vertice_destino, custo);
 
         // printf("find(%d) = %d ", vertice_origem, origem);
         // printf("find(%d) = %d ", vertice_destino, destino);
@@ -281,12 +292,21 @@ void kruskal_union_find(Aresta *E, int n_nodes, int n_edges)
         if (origem != destino)
         {
             // printf("Vertices in different trees. Add edge to tree: Union(%d, %d) \n", origem, destino);
-            _union_find(parent, origem, destino);
-            n_node_t++;
-            // } else {
-            // printf("Vertices in the same tree. Skip edge \n");
+            disjointSet_union(parent, origem, destino);
+            MST[n_edge_t++] = E[n_edge];
+        // } else {
+        //     printf("Vertices in the same tree. Skip edge \n");
         }
+        // print(parent, n_nodes);
+        // printf("\n");
     }
+    printf("MST UF ");
+    for (int n_edge = 0; n_edge < n_edge_t; n_edge++)
+    {
+        printf("%d-%d=%d | ", MST[n_edge]._origem, MST[n_edge]._destino, MST[n_edge]._custo);
+    }
+    printf("\n");
+    return MST;
 }
 void run(char *nomeDoArquivo, char *nomeDaInstancia)
 {
@@ -317,12 +337,9 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
                     (*aresta_d)._destino = (*aresta_o)._destino;
                     (*aresta_d)._custo = (*aresta_o)._custo;
                 }
-                rank = malloc(n_nodes * sizeof(int));
-                for (int i = 0; i < n_nodes; i++)
-                    rank[i] = 0;
+
                 parent = malloc(n_nodes * sizeof(int));
-                for (int i = 0; i < n_nodes; i++)
-                    parent[i] = -1;
+                disjointSet_makeSet(parent, n_nodes);
 
                 dataset[nb_dataset].grafos[nb_graph].start = get_time_in_seconds();
                 kruskal_union_find(
@@ -333,6 +350,8 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
                 dataset[nb_dataset].grafos[nb_graph].end = get_time_in_seconds();
                 double delta = (dataset[nb_dataset].grafos[nb_graph].end - dataset[nb_dataset].grafos[nb_graph].start);
                 soma += delta;
+                // printf("UNION-FIND\n");
+                // print(parent, n_nodes);
                 free(rank);
                 free(parent);
                 free(arestas);
@@ -352,6 +371,7 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
         }
         free(dataset);
     }
+    //*
     {
         Dataset *dataset = abrir(nomeDoArquivo);
         int nb_dataset = 0;
@@ -394,6 +414,8 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
                 dataset[nb_dataset].grafos[nb_graph].end = get_time_in_seconds();
                 double delta = (dataset[nb_dataset].grafos[nb_graph].end - dataset[nb_dataset].grafos[nb_graph].start);
                 soma += delta;
+                // printf("UNION-BY-RANK\n");
+                // print(parent, n_nodes);
                 free(rank);
                 free(parent);
                 free(arestas);
@@ -412,6 +434,7 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
         }
         free(dataset);
     }
+    // */
     // {
     //     int nb_dataset = 0;
     //     for (int nb_graph = 0; nb_graph < dataset[0].nb_graphs; nb_graph++)
@@ -428,20 +451,20 @@ int main()
     char nomeDoArquivo[100];
     char nomeDaInstancia[100];
 
-    // sprintf(nomeDoArquivo, "resource/inst_teste.dat");
-    // sprintf(nomeDaInstancia, "Teste");
-    // run(nomeDoArquivo, nomeDaInstancia);
+    sprintf(nomeDoArquivo, "resource/inst_test0.dat");
+    sprintf(nomeDaInstancia, "Teste");
+    run(nomeDoArquivo, nomeDaInstancia);
 
-    for (int i = 1; i <= 10; i++)
-    {
-        sprintf(nomeDoArquivo, "resource/GrafoCompleto/inst_v%d00.dat", i);
-        sprintf(nomeDaInstancia, "GrafoCompleto_%d00", i);
-        run(nomeDoArquivo, nomeDaInstancia);
-    }
-    for (int i = 1; i <= 10; i++)
-    {
-        sprintf(nomeDoArquivo, "resource/GrafoEsparso/i%d00gs.txt", i);
-        sprintf(nomeDaInstancia, "GrafoEsparso_%d00", i);
-        run(nomeDoArquivo, nomeDaInstancia);
-    }
+    // for (int i = 1; i <= 10; i++)
+    // {
+    //     sprintf(nomeDoArquivo, "resource/GrafoCompleto/inst_v%d00.dat", i);
+    //     sprintf(nomeDaInstancia, "GrafoCompleto_%d00", i);
+    //     run(nomeDoArquivo, nomeDaInstancia);
+    // }
+    // for (int i = 1; i <= 10; i++)
+    // {
+    //     sprintf(nomeDoArquivo, "resource/GrafoEsparso/i%d00gs.txt", i);
+    //     sprintf(nomeDaInstancia, "GrafoEsparso_%d00", i);
+    //     run(nomeDoArquivo, nomeDaInstancia);
+    // }
 }
