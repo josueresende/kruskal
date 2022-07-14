@@ -165,6 +165,7 @@ void troca(Aresta *x, Aresta *y)
     *x = *y;
     *y = temp;
 }
+
 int dividir(Aresta *A, int x, int y)
 {
     int i, p = x, pivot = A[y]._custo;
@@ -179,6 +180,7 @@ int dividir(Aresta *A, int x, int y)
     troca(&A[y], &A[p]);
     return p;
 }
+
 void quicksort(Aresta *A, int x, int y)
 {
     if (x >= y)
@@ -187,11 +189,13 @@ void quicksort(Aresta *A, int x, int y)
     quicksort(A, x, q - 1);
     quicksort(A, q + 1, y);
 }
+
 int _find(int parent[], int i)
 {
     if (parent[i] == -1) return i;
     return _find(parent, parent[i]);
 }
+
 void _union_by_rank(int u, int v, int parent[], int rank[])
 {
     int x, y;
@@ -207,6 +211,7 @@ void _union_by_rank(int u, int v, int parent[], int rank[])
         rank[y]++;
     }
 }
+
 void print(int rank[], int n_nodes)
 {
     for (int i = 0; i < n_nodes; i++) 
@@ -216,22 +221,26 @@ void print(int rank[], int n_nodes)
     }
     printf("\n");
 }
+
 void disjointSet_makeSet(int parent[], int n_nodes)
 {
     for (int i = 0; i < n_nodes; i++)
         parent[i] = i;
 }
+
 int disjointSet_find(int parent[], int i)
 {
     if (parent[i] == i) return i;
     return disjointSet_find(parent, parent[i]);
 }
+
 void disjointSet_union(int parent[], int x, int y)
 {
     int xset = disjointSet_find(parent, x);
     int yset = disjointSet_find(parent, y);
     parent[xset] = yset;
 }
+
 void kruskal_union_by_rank(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int n_edges)
 {
     rank = malloc(n_nodes * sizeof(int));
@@ -265,6 +274,7 @@ void kruskal_union_by_rank(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int
         }
     }
 }
+
 // O(E log E)
 void kruskal_union_find(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int n_edges)
 {
@@ -291,6 +301,7 @@ void kruskal_union_find(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int n_
         }
     }
 }
+
 int nb_header = 0;
 void run(char *nomeDoArquivo, char *nomeDaInstancia)
 {
@@ -404,8 +415,19 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
 
         double mlogn = dataset[nb_dataset].grafos[nb_graph].nb_edges * log10(dataset[nb_dataset].grafos[nb_graph].nb_nodes);
 
+        FILE *arq;
+        arq = fopen("resultado.csv","a");
+        char titulo1[50] = "instancia";
+        char titulo2[50] = "n";
+        char titulo3[50] = "m";
+        char titulo4[50] = "tempo - union-find";
+        char titulo5[50] = "tempo - union-by-rank";
+        char titulo6[50] = "O(m log n)";
+        char titulo7[50] = "Solucao";
+
         if (nb_header++ == 0) {
-            printf("\"instancia\", \"n\", \"m\", \"tempo - union-find\", \"tempo - union-by-rank\", \"complexidade teorica\", \"custo da solucao\"\n");
+            fprintf(arq, "%s, %s, %s, %s, %s, %s, %s\n", titulo1, titulo2, titulo3, titulo4, titulo5, titulo6, titulo7);
+            printf("\"instancia\", \"n\", \"m\", \"tempo - union-find\", \"tempo - union-by-rank\", \"O(m log n)\", \"solucao\"\n");
         }
 
         printf("\"%s_%d_%d\", %d, %d, %f, %f, %f, %d \n",
@@ -419,18 +441,27 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
             mlogn,
             total
         );
+        fprintf(arq, "\"%s_%d_%d\", %d, %d, %f, %f, %f, %d \n",  
+            nomeDaInstancia, 
+            dataset[0].nb_graphs, 
+            (nb_graph + 1), 
+            dataset[nb_dataset].grafos[nb_graph].nb_nodes, 
+            dataset[nb_dataset].grafos[nb_graph].nb_edges, 
+            delta_1,
+            delta_2,
+            mlogn,
+            total
+        );
+        fclose(arq);
     }
     free(dataset);
 }
+
 int main()
 {
 
     char nomeDoArquivo[100];
     char nomeDaInstancia[100];
-
-    sprintf(nomeDoArquivo, "resource/inst_test2.dat");
-    sprintf(nomeDaInstancia, "Teste");
-    run(nomeDoArquivo, nomeDaInstancia);
 
     for (int i = 1; i <= 10; i++)
     {
