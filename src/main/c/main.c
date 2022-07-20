@@ -23,7 +23,6 @@ typedef struct GRAPH
 typedef struct MST
 {
     int nb_edges; // arestas
-    int nb_nodes; // vertices
     int _custo;
     Aresta *arestas;
 } MinimumSpanningTree;
@@ -309,7 +308,6 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
             {
                 MST->arestas = (Aresta*)malloc((nb_edges-1)*sizeof(Aresta));
                 MST->nb_edges = 0;
-                MST->nb_nodes = 0;
                 MST->_custo = 0;
 
                 // -> COPIAR ARESTAS
@@ -348,7 +346,6 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
             {
                 MST->arestas = (Aresta*)malloc((nb_edges-1)*sizeof(Aresta));
                 MST->nb_edges = 0;
-                MST->nb_nodes = 0;
                 MST->_custo = 0;
 
                 Aresta *arestas = (Aresta *)malloc(nb_edges * sizeof(Aresta));
