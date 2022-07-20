@@ -3,7 +3,7 @@
 #include <time.h>
 #include <string.h>
 #include <math.h>
-#define TURNS 1
+#define TURNS 5
 typedef struct ARESTA
 {
     int _origem;
@@ -158,7 +158,7 @@ Dataset *abrir(char *nomeDoArquivo)
     return dataset;
 }
 
-void troca(Aresta *x, Aresta *y)
+void quicksort_troca(Aresta *x, Aresta *y)
 {
     Aresta temp;
     temp = *x;
@@ -166,26 +166,25 @@ void troca(Aresta *x, Aresta *y)
     *y = temp;
 }
 
-int dividir(Aresta *A, int x, int y)
+int quicksort_dividir(Aresta *A, int x, int y)
 {
     int i, p = x, pivot = A[y]._custo;
     for (i = x; i < y; i++)
     {
         if (A[i]._custo <= pivot)
         {
-            troca(&A[i], &A[p]);
+            quicksort_troca(&A[i], &A[p]);
             p++;
         } 
     }
-    troca(&A[y], &A[p]);
+    quicksort_troca(&A[y], &A[p]);
     return p;
 }
-
 void quicksort(Aresta *A, int x, int y)
 {
     if (x >= y)
         return;
-    int q = dividir(A, x, y);
+    int q = quicksort_dividir(A, x, y);
     quicksort(A, x, q - 1);
     quicksort(A, q + 1, y);
 }
@@ -212,14 +211,34 @@ void _union_by_rank(int u, int v, int parent[], int rank[])
     }
 }
 
-void print(int rank[], int n_nodes)
+void kruskal_union_by_rank(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int n_edges)
 {
-    for (int i = 0; i < n_nodes; i++) 
+    rank = malloc(n_nodes * sizeof(int));
+    for (int i = 0; i < n_nodes; i++)
+        rank[i] = 0;
+    parent = malloc(n_nodes * sizeof(int));
+    for (int i = 0; i < n_nodes; i++)
+        parent[i] = -1;
+
+    quicksort(E, 0, n_edges - 1);
+
+    int origem, destino;
+
+    for (int n_edge = 0; n_edge < n_edges; n_edge++)
     {
-        if (rank[i] < 0) continue;
-        printf("%02d-%02d  ", i, rank[i]);
+        if (MST->nb_edges == (n_edges - 1))
+            break;
+
+        origem = _find(parent, E[n_edge]._origem);
+        destino = _find(parent, E[n_edge]._destino);
+
+        if (origem != destino)
+        {
+            _union_by_rank(origem, destino, parent, rank);
+            MST->arestas[MST->nb_edges++] = E[n_edge];
+            MST->_custo += E[n_edge]._custo;
+        }
     }
-    printf("\n");
 }
 
 void disjointSet_makeSet(int parent[], int n_nodes)
@@ -241,40 +260,6 @@ void disjointSet_union(int parent[], int x, int y)
     parent[xset] = yset;
 }
 
-void kruskal_union_by_rank(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int n_edges)
-{
-    rank = malloc(n_nodes * sizeof(int));
-    for (int i = 0; i < n_nodes; i++)
-        rank[i] = i;
-    parent = malloc(n_nodes * sizeof(int));
-    for (int i = 0; i < n_nodes; i++)
-        parent[i] = -1;
-
-    quicksort(E, 0, n_edges - 1);
-
-    int vertice_origem, vertice_destino, origem, destino, custo;
-
-    for (int n_edge = 0; n_edge < n_edges; n_edge++)
-    {
-        if (MST->nb_edges == (n_edges - 1))
-            break;
-
-        vertice_origem = E[n_edge]._origem;
-        vertice_destino = E[n_edge]._destino;
-        custo = E[n_edge]._custo;
-
-        origem = _find(parent, vertice_origem);
-        destino = _find(parent, vertice_destino);
-
-        if (origem != destino)
-        {
-            _union_by_rank(origem, destino, parent, rank);
-            MST->arestas[MST->nb_edges++] = E[n_edge];
-            MST->_custo += E[n_edge]._custo;
-        }
-    }
-}
-
 // O(E log E)
 void kruskal_union_find(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int n_edges)
 {
@@ -283,7 +268,7 @@ void kruskal_union_find(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int n_
 
     quicksort(E, 0, n_edges - 1); // O(log E)
 
-    int vertice_origem, vertice_destino, origem, destino, custo;
+    int origem, destino;
 
     for (int n_edge = 0; n_edge < n_edges; n_edge++) // O(E)
     {
@@ -295,9 +280,9 @@ void kruskal_union_find(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int n_
 
         if (origem != destino)
         {
+            disjointSet_union(parent, origem, destino);
             MST->arestas[MST->nb_edges++] = E[n_edge];
             MST->_custo += E[n_edge]._custo;
-            disjointSet_union(parent, origem, destino);
         }
     }
 }
