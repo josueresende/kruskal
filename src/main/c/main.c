@@ -313,15 +313,6 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
 
         int nb_edges = dataset[nb_dataset].grafos[nb_graph].nb_edges;
 
-        // for (int n_edge = 0; n_edge < nb_edges; n_edge++)
-        // {
-        //     printf("%d-%d=%d \n",
-        //         dataset[nb_dataset].grafos[nb_graph].arestas[n_edge]._origem,
-        //         dataset[nb_dataset].grafos[nb_graph].arestas[n_edge]._destino,
-        //         dataset[nb_dataset].grafos[nb_graph].arestas[n_edge]._custo
-        //     );
-        // }
-
         MinimumSpanningTree *MST = (MinimumSpanningTree*)malloc(sizeof(MinimumSpanningTree));
 
         int total = 0;
@@ -402,16 +393,6 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
             }
             delta_2 = soma / TURNS;
         }
-
-        // for (int n_edge = 0; n_edge < MST->nb_edges; n_edge++)
-        // {
-        //     printf("%d-%d=%d ",
-        //         MST->arestas[n_edge]._origem,
-        //         MST->arestas[n_edge]._destino,
-        //         MST->arestas[n_edge]._custo
-        //     );
-        // }
-        // printf("\n");
 
         double mlogn = dataset[nb_dataset].grafos[nb_graph].nb_edges * log10(dataset[nb_dataset].grafos[nb_graph].nb_nodes);
 
