@@ -14,8 +14,6 @@ typedef struct ARESTA
 
 typedef struct GRAPH
 {
-    double start;
-    double end;
     int nb_edges; // arestas
     int nb_nodes; // vertices
     Aresta *arestas;
@@ -305,19 +303,16 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
                     (*aresta_d)._destino = (*aresta_o)._destino;
                     (*aresta_d)._custo = (*aresta_o)._custo;
                 }
-                // COPIAR ARESTAS <-
-                // -> kruskal union-find
-                dataset[nb_dataset].grafos[nb_graph].start = get_time_in_seconds();
+
                 kruskal_union_find(
                     MST,
                     arestas,
                     dataset[nb_dataset].grafos[nb_graph].nb_nodes,
                     dataset[nb_dataset].grafos[nb_graph].nb_edges
                 );
-                dataset[nb_dataset].grafos[nb_graph].end = get_time_in_seconds();
-                // kruskal union-find <-
+
                 total = MST->_custo;
-                // double delta = (dataset[nb_dataset].grafos[nb_graph].end - dataset[nb_dataset].grafos[nb_graph].start);
+
                 double delta = (MST->time_f - MST->uf_time_i);
                 if (turn >= GAP) soma += delta;
                 free(simple_parent);
@@ -346,16 +341,15 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
                     (*aresta_d)._custo = (*aresta_o)._custo;
                 }
 
-                dataset[nb_dataset].grafos[nb_graph].start = get_time_in_seconds();
                 kruskal_union_by_rank(
                     MST,
                     arestas,
                     dataset[nb_dataset].grafos[nb_graph].nb_nodes,
                     dataset[nb_dataset].grafos[nb_graph].nb_edges
                 );
-                dataset[nb_dataset].grafos[nb_graph].end = get_time_in_seconds();
+
                 total = MST->_custo;
-                // double delta = (dataset[nb_dataset].grafos[nb_graph].end - dataset[nb_dataset].grafos[nb_graph].start);
+
                 double delta = (MST->time_f - MST->uf_time_i);
                 if (turn >= GAP) soma += delta;
                 free(better_rank);
