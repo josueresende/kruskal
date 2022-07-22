@@ -168,6 +168,37 @@ Dataset *abrir(char *nomeDoArquivo)
     return dataset;
 }
 
+void quicksort_troca(Aresta *x, Aresta *y)
+{
+    Aresta temp;
+    temp = *x;
+    *x = *y;
+    *y = temp;
+}
+
+int quicksort_dividir(Aresta *A, int x, int y)
+{
+    int i, p = x, pivot = A[y]._custo;
+    for (i = x; i < y; i++)
+    {
+        if (A[i]._custo <= pivot)
+        {
+            quicksort_troca(&A[i], &A[p]);
+            p++;
+        } 
+    }
+    quicksort_troca(&A[y], &A[p]);
+    return p;
+}
+void quicksort(Aresta *A, int x, int y)
+{
+    if (x >= y)
+        return;
+    int q = quicksort_dividir(A, x, y);
+    quicksort(A, x, q - 1);
+    quicksort(A, q + 1, y);
+}
+
 // utilizado pelo qsort
 int qsort_aresta_custo(const void* a, const void* b)
 {
