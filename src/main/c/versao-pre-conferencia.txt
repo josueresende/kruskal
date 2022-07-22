@@ -158,31 +158,34 @@ Dataset *abrir(char *nomeDoArquivo)
     return dataset;
 }
 
-void quicksort_troca(Aresta *x, Aresta *y)
+void troca(Aresta *x, Aresta *y)
 {
     Aresta temp;
     temp = *x;
     *x = *y;
     *y = temp;
 }
-int quicksort_dividir(Aresta *A, int x, int y)
+
+int dividir(Aresta *A, int x, int y)
 {
     int i, p = x, pivot = A[y]._custo;
     for (i = x; i < y; i++)
     {
         if (A[i]._custo <= pivot)
         {
-            quicksort_troca(&A[i], &A[p]);
+            troca(&A[i], &A[p]);
             p++;
         } 
     }
     troca(&A[y], &A[p]);
     return p;
 }
+
 void quicksort(Aresta *A, int x, int y)
 {
-    if (x >= y) return;
-    int q = quicksort_dividir(A, x, y);
+    if (x >= y)
+        return;
+    int q = dividir(A, x, y);
     quicksort(A, x, q - 1);
     quicksort(A, q + 1, y);
 }
@@ -219,23 +222,22 @@ void print(int rank[], int n_nodes)
     printf("\n");
 }
 
-void simple_makeSet(int n_nodes)
+void disjointSet_makeSet(int parent[], int n_nodes)
 {
-    parent = malloc(n_nodes * sizeof(int));
-    for (int i = 0; i < n_nodes; i++) {
+    for (int i = 0; i < n_nodes; i++)
         parent[i] = i;
-    }
 }
 
-int simple_find(int parent[], int i)
+int disjointSet_find(int parent[], int i)
 {
-    return parent[i];
+    if (parent[i] == i) return i;
+    return disjointSet_find(parent, parent[i]);
 }
 
-void simple_union(int parent[], int x, int y)
+void disjointSet_union(int parent[], int x, int y)
 {
-    int xset = simple_find(parent, x);
-    int yset = simple_find(parent, y);
+    int xset = disjointSet_find(parent, x);
+    int yset = disjointSet_find(parent, y);
     parent[xset] = yset;
 }
 
@@ -273,18 +275,8 @@ void kruskal_union_by_rank(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int
     }
 }
 
-void kruskal_union_find(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int n_edges)
-{
-    simple_makeSet(n_nodes);
-    quicksort(E, 0, n_edges - 1); // O(log E)
-    for (int n_edge = 0; n_edge < n_edges; n_edge++) // O(E)
-    {
-        
-    }
-}
-
 // O(E log E)
-void kruskal_union_find_ex(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int n_edges)
+void kruskal_union_find(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int n_edges)
 {
     parent = malloc(n_nodes * sizeof(int));
     disjointSet_makeSet(parent, n_nodes); // O(n)
