@@ -199,14 +199,6 @@ void quicksort(Aresta *A, int x, int y)
     quicksort(A, q + 1, y);
 }
 
-// utilizado pelo qsort
-int qsort_aresta_custo(const void* a, const void* b)
-{
-    Aresta* a1 = (Aresta*)a;
-    Aresta* b1 = (Aresta*)b;
-    return a1->_custo > b1->_custo;
-}
-
 void simple_makeSet(int n_nodes)
 {
     simple_parent = malloc(n_nodes * sizeof(int));
@@ -235,8 +227,7 @@ void kruskal_union_find(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int n_
     simple_makeSet(n_nodes);
     // quicksort
     MST->qs_time_i = get_time_for_scale();
-    // quicksort(E, 0, n_edges - 1);
-    qsort((Aresta *)E, n_edges - 1, sizeof(Aresta), qsort_aresta_custo);
+    quicksort(E, 0, n_edges - 1);
     // union-find
     MST->uf_time_i = get_time_for_scale();
     for (int n_edge = 0; n_edge < n_edges; n_edge++)
@@ -291,8 +282,7 @@ void kruskal_union_by_rank(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int
     better_makeSet(n_nodes);
     // quicksort
     MST->qs_time_i = get_time_for_scale();
-    // quicksort(E, 0, n_edges - 1);
-    qsort((Aresta *)E, n_edges - 1, sizeof(Aresta), qsort_aresta_custo);
+    quicksort(E, 0, n_edges - 1);
     // union by rank
     MST->uf_time_i = get_time_for_scale();
     for (int n_edge = 0; n_edge < n_edges; n_edge++)
