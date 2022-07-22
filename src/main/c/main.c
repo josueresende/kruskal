@@ -217,25 +217,15 @@ void simple_makeSet(int n_nodes)
 
 int simple_find(int i)
 {
-    if (simple_parent[i] == -1)
-        return i;
+    if (simple_parent[i] == -1) return i;
     return simple_find(simple_parent[i]);
 }
 
-// void simple_union(int x, int y)
-// {
-//     int xset = simple_find(x);
-//     int yset = simple_find(y);
-//     simple_parent[xset] = yset;
-// }
-
-void simple_union(int n_nodes, int x, int y)
+void simple_union(int x, int y)
 {
-    for (int i = 0; i < n_nodes; i++) {
-        if (simple_parent[i] == x) {
-            simple_parent[i] = y;
-        }
-    }
+    int xset = simple_find(x);
+    int yset = simple_find(y);
+    simple_parent[xset] = yset;
 }
 
 void kruskal_union_find(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int n_edges)
@@ -245,7 +235,8 @@ void kruskal_union_find(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int n_
     simple_makeSet(n_nodes);
     // quicksort
     MST->qs_time_i = get_time_for_scale();
-    qsort((Aresta *)E, n_edges, sizeof(Aresta), qsort_aresta_custo);
+    // quicksort(E, 0, n_edges - 1);
+    qsort((Aresta *)E, n_edges - 1, sizeof(Aresta), qsort_aresta_custo);
     // union-find
     MST->uf_time_i = get_time_for_scale();
     for (int n_edge = 0; n_edge < n_edges; n_edge++)
@@ -254,7 +245,7 @@ void kruskal_union_find(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int n_
         int destino = simple_find(E[n_edge]._destino);
         if (origem != destino)
         {
-            simple_union(n_nodes, origem, destino);
+            simple_union(origem, destino);
             MST->arestas[MST->nb_edges++] = E[n_edge];
             MST->_custo += E[n_edge]._custo;
         }
@@ -300,7 +291,8 @@ void kruskal_union_by_rank(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int
     better_makeSet(n_nodes);
     // quicksort
     MST->qs_time_i = get_time_for_scale();
-    qsort((Aresta *)E, n_edges, sizeof(Aresta), qsort_aresta_custo);
+    // quicksort(E, 0, n_edges - 1);
+    qsort((Aresta *)E, n_edges - 1, sizeof(Aresta), qsort_aresta_custo);
     // union by rank
     MST->uf_time_i = get_time_for_scale();
     for (int n_edge = 0; n_edge < n_edges; n_edge++)
@@ -368,12 +360,12 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
                 free(arestas);
             }
             delta_1 = soma / TURNS;
-            // printf("%s MST SIMPLE ", nomeDaInstancia);
-            // for (int n_edge = 0; n_edge < MST->nb_edges; n_edge++)
-            // {
-            //     printf("%d-%d=%d | ", MST->arestas[n_edge]._origem, MST->arestas[n_edge]._destino, MST->arestas[n_edge]._custo);
-            // }
-            // printf("\n");            
+            printf("%s MST SIMPLE ", nomeDaInstancia);
+            for (int n_edge = 0; n_edge < MST->nb_edges; n_edge++)
+            {
+                printf("%d-%d=%d | ", MST->arestas[n_edge]._origem, MST->arestas[n_edge]._destino, MST->arestas[n_edge]._custo);
+            }
+            printf("CUSTO=%d \n", MST->_custo);
         }
         double delta_2 = 0;
         // total = 0;
@@ -411,12 +403,12 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
                 free(arestas);
             }
             delta_2 = soma / TURNS;
-            // printf("%s MST BETTER ", nomeDaInstancia);
-            // for (int n_edge = 0; n_edge < MST->nb_edges; n_edge++)
-            // {
-            //     printf("%d-%d=%d | ", MST->arestas[n_edge]._origem, MST->arestas[n_edge]._destino, MST->arestas[n_edge]._custo);
-            // }
-            // printf("\n");            
+            printf("%s MST BETTER ", nomeDaInstancia);
+            for (int n_edge = 0; n_edge < MST->nb_edges; n_edge++)
+            {
+                printf("%d-%d=%d | ", MST->arestas[n_edge]._origem, MST->arestas[n_edge]._destino, MST->arestas[n_edge]._custo);
+            }
+            printf("CUSTO=%d \n", MST->_custo);
         }
         // */
         free(MST->arestas);
@@ -472,7 +464,12 @@ int main()
     char nomeDoArquivo[100];
     char nomeDaInstancia[100];
 
-    // /*
+    int i = 3;
+        sprintf(nomeDoArquivo, "resource/inst_test%d.dat", i);
+        sprintf(nomeDaInstancia, "teste%d", i);
+        run(nomeDoArquivo, nomeDaInstancia);
+
+    /*
     for (int i = 1; i <= 10; i++)
     {
         sprintf(nomeDoArquivo, "resource/GrafoCompleto/inst_v%d00.dat", i);
