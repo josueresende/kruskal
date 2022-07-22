@@ -42,20 +42,26 @@ int *better_parent;
 int *better_rank;
 
 #ifdef _WIN32
-double get_time_in_seconds()
+double get_time_in_seconds_platform()
 {
     struct timespec t;
-    clock_gettime(CLOCK_MONOTONIC, &t);
-    return (double)t.tv_sec + 1.0e-6 * t.tv_nsec;
+    clock_gettime(CLOCK_REALTIME, &t);
+    return (double)t.tv_sec + (1.0e-9 * t.tv_nsec);
 }
 #else
-double get_time_in_seconds()
+double get_time_in_seconds_platform()
 {
     struct timespec t;
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t);
-    return (double)t.tv_sec + 1.0e-6 * t.tv_nsec;
+    return (double)t.tv_sec + (1.0e-9 * t.tv_nsec);
 }
 #endif
+
+double get_time_for_scale()
+{
+    return 1000 * get_time_in_seconds_platform();
+}
+
 int compare(const char *left, char *right)
 {
     return strncmp(left, right, strlen(left));
@@ -174,14 +180,23 @@ void simple_makeSet(int n_nodes)
 {
     simple_parent = malloc(n_nodes * sizeof(int));
     for (int i = 0; i < n_nodes; i++) {
-        simple_parent[i] = i;
+        simple_parent[i] = -1;
     }
 }
 
 int simple_find(int i)
 {
-    return simple_parent[i];
+    if (simple_parent[i] == -1)
+        return i;
+    return simple_find(simple_parent[i]);
 }
+
+// void simple_union(int x, int y)
+// {
+//     int xset = simple_find(x);
+//     int yset = simple_find(y);
+//     simple_parent[xset] = yset;
+// }
 
 void simple_union(int n_nodes, int x, int y)
 {
@@ -195,13 +210,13 @@ void simple_union(int n_nodes, int x, int y)
 void kruskal_union_find(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int n_edges)
 {
     // makeset
-    MST->ms_time_i = get_time_in_seconds();
+    MST->ms_time_i = get_time_for_scale();
     simple_makeSet(n_nodes);
     // quicksort
-    MST->qs_time_i = get_time_in_seconds();
+    MST->qs_time_i = get_time_for_scale();
     qsort((Aresta *)E, n_edges, sizeof(Aresta), qsort_aresta_custo);
     // union-find
-    MST->uf_time_i = get_time_in_seconds();
+    MST->uf_time_i = get_time_for_scale();
     for (int n_edge = 0; n_edge < n_edges; n_edge++)
     {
         int origem  = simple_find(E[n_edge]._origem);
@@ -213,7 +228,7 @@ void kruskal_union_find(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int n_
             MST->_custo += E[n_edge]._custo;
         }
     }
-    MST->time_f = get_time_in_seconds();
+    MST->time_f = get_time_for_scale();
 }
 
 void better_makeSet(int n_nodes)
@@ -229,8 +244,10 @@ void better_makeSet(int n_nodes)
 
 int better_find(int i)
 {
-    if (better_parent[i] == i) return i;
-    return better_find(better_parent[i]);
+    if (better_parent[i] != i) {
+        return better_find(better_parent[i]);
+    }
+    return better_parent[i];
 }
 
 void better_union(int x, int y)
@@ -248,13 +265,13 @@ void better_union(int x, int y)
 void kruskal_union_by_rank(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int n_edges)
 {
     // makeset
-    MST->ms_time_i = get_time_in_seconds();
+    MST->ms_time_i = get_time_for_scale();
     better_makeSet(n_nodes);
     // quicksort
-    MST->qs_time_i = get_time_in_seconds();
+    MST->qs_time_i = get_time_for_scale();
     qsort((Aresta *)E, n_edges, sizeof(Aresta), qsort_aresta_custo);
     // union by rank
-    MST->uf_time_i = get_time_in_seconds();
+    MST->uf_time_i = get_time_for_scale();
     for (int n_edge = 0; n_edge < n_edges; n_edge++)
     {
         int origem  = better_find(E[n_edge]._origem);
@@ -266,7 +283,7 @@ void kruskal_union_by_rank(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int
             MST->_custo += E[n_edge]._custo;
         }
     }
-    MST->time_f = get_time_in_seconds();
+    MST->time_f = get_time_for_scale();
 
 }
 
@@ -283,13 +300,14 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
 
         MinimumSpanningTree *MST = (MinimumSpanningTree*)malloc(sizeof(MinimumSpanningTree));
 
+        MST->arestas = (Aresta*)malloc((nb_edges-1)*sizeof(Aresta));
+
         int total = 0;
         double delta_1 = 0;
         { // union-find
             double soma = 0;
             for (int turn = 0; turn < (TURNS + GAP); turn++)
             {
-                MST->arestas = (Aresta*)malloc((nb_edges-1)*sizeof(Aresta));
                 MST->nb_edges = 0;
                 MST->_custo = 0;
 
@@ -319,15 +337,20 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
                 free(arestas);
             }
             delta_1 = soma / TURNS;
+            // printf("%s MST SIMPLE ", nomeDaInstancia);
+            // for (int n_edge = 0; n_edge < MST->nb_edges; n_edge++)
+            // {
+            //     printf("%d-%d=%d | ", MST->arestas[n_edge]._origem, MST->arestas[n_edge]._destino, MST->arestas[n_edge]._custo);
+            // }
+            // printf("\n");            
         }
         double delta_2 = 0;
-        total = 0;
+        // total = 0;
         //*
         { // union-by-rank
             double soma = 0;
             for (int turn = 0; turn < (TURNS + GAP); turn++)
             {
-                MST->arestas = (Aresta*)malloc((nb_edges-1)*sizeof(Aresta));
                 MST->nb_edges = 0;
                 MST->_custo = 0;
 
@@ -348,7 +371,7 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
                     dataset[nb_dataset].grafos[nb_graph].nb_edges
                 );
 
-                total = MST->_custo;
+                // total = MST->_custo;
 
                 double delta = (MST->time_f - MST->uf_time_i);
                 if (turn >= GAP) soma += delta;
@@ -357,8 +380,16 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
                 free(arestas);
             }
             delta_2 = soma / TURNS;
+            // printf("%s MST BETTER ", nomeDaInstancia);
+            // for (int n_edge = 0; n_edge < MST->nb_edges; n_edge++)
+            // {
+            //     printf("%d-%d=%d | ", MST->arestas[n_edge]._origem, MST->arestas[n_edge]._destino, MST->arestas[n_edge]._custo);
+            // }
+            // printf("\n");            
         }
         // */
+        free(MST->arestas);
+        free(MST);
 
         double mlogn = dataset[nb_dataset].grafos[nb_graph].nb_edges * log10(dataset[nb_dataset].grafos[nb_graph].nb_nodes);
 
@@ -410,6 +441,7 @@ int main()
     char nomeDoArquivo[100];
     char nomeDaInstancia[100];
 
+    // /*
     for (int i = 1; i <= 10; i++)
     {
         sprintf(nomeDoArquivo, "resource/GrafoCompleto/inst_v%d00.dat", i);
@@ -422,4 +454,5 @@ int main()
         sprintf(nomeDaInstancia, "GrafoEsparso_%d00", i);
         run(nomeDoArquivo, nomeDaInstancia);
     }
+    // */
 }
