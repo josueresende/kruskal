@@ -3,7 +3,8 @@
 #include <time.h>
 #include <string.h>
 #include <math.h>
-#define TURNS 1
+#define TURNS 5
+#define GAP 2
 typedef struct ARESTA
 {
     int _origem;
@@ -23,8 +24,11 @@ typedef struct GRAPH
 typedef struct MST
 {
     int nb_edges; // arestas
-    int nb_nodes; // vertices
     int _custo;
+    double ms_time_i; // marcador tempo
+    double qs_time_i; // marcador tempo
+    double uf_time_i; // marcador tempo
+    double time_f; // marcador tempo
     Aresta *arestas;
 } MinimumSpanningTree;
 
@@ -34,22 +38,24 @@ typedef struct DATASET
     int nb_graphs;
 } Dataset;
 
-int *parent;
-int *rank;
+int *simple_parent;
+
+int *better_parent;
+int *better_rank;
 
 #ifdef _WIN32
 double get_time_in_seconds()
 {
     struct timespec t;
     clock_gettime(CLOCK_MONOTONIC, &t);
-    return (double)t.tv_sec + 1.0e-9 * t.tv_nsec;
+    return (double)t.tv_sec + 1.0e-6 * t.tv_nsec;
 }
 #else
 double get_time_in_seconds()
 {
     struct timespec t;
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t);
-    return (double)t.tv_sec + 1.0e-9 * t.tv_nsec;
+    return (double)t.tv_sec + 1.0e-6 * t.tv_nsec;
 }
 #endif
 int compare(const char *left, char *right)
@@ -158,156 +164,112 @@ Dataset *abrir(char *nomeDoArquivo)
     return dataset;
 }
 
-void quicksort_troca(Aresta *x, Aresta *y)
+// utilizado pelo qsort
+int qsort_aresta_custo(const void* a, const void* b)
 {
-    Aresta temp;
-    temp = *x;
-    *x = *y;
-    *y = temp;
-}
-int quicksort_dividir(Aresta *A, int x, int y)
-{
-    int i, p = x, pivot = A[y]._custo;
-    for (i = x; i < y; i++)
-    {
-        if (A[i]._custo <= pivot)
-        {
-            quicksort_troca(&A[i], &A[p]);
-            p++;
-        } 
-    }
-    troca(&A[y], &A[p]);
-    return p;
-}
-void quicksort(Aresta *A, int x, int y)
-{
-    if (x >= y) return;
-    int q = quicksort_dividir(A, x, y);
-    quicksort(A, x, q - 1);
-    quicksort(A, q + 1, y);
-}
-
-int _find(int parent[], int i)
-{
-    if (parent[i] == -1) return i;
-    return _find(parent, parent[i]);
-}
-
-void _union_by_rank(int u, int v, int parent[], int rank[])
-{
-    int x, y;
-    x = _find(parent, u);
-    y = _find(parent, v);
-    if (rank[x] < rank[y])
-        parent[x] = y;
-    else if (rank[y] < rank[x])
-        parent[y] = x;
-    else
-    {
-        parent[x] = y;
-        rank[y]++;
-    }
-}
-
-void print(int rank[], int n_nodes)
-{
-    for (int i = 0; i < n_nodes; i++) 
-    {
-        if (rank[i] < 0) continue;
-        printf("%02d-%02d  ", i, rank[i]);
-    }
-    printf("\n");
+    Aresta* a1 = (Aresta*)a;
+    Aresta* b1 = (Aresta*)b;
+    return a1->_custo > b1->_custo;
 }
 
 void simple_makeSet(int n_nodes)
 {
-    parent = malloc(n_nodes * sizeof(int));
+    simple_parent = malloc(n_nodes * sizeof(int));
     for (int i = 0; i < n_nodes; i++) {
-        parent[i] = i;
+        simple_parent[i] = i;
     }
 }
 
-int simple_find(int parent[], int i)
+int simple_find(int i)
 {
-    return parent[i];
+    return simple_parent[i];
 }
 
-void simple_union(int parent[], int x, int y)
+void simple_union(int n_nodes, int x, int y)
 {
-    int xset = simple_find(parent, x);
-    int yset = simple_find(parent, y);
-    parent[xset] = yset;
-}
-
-void kruskal_union_by_rank(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int n_edges)
-{
-    rank = malloc(n_nodes * sizeof(int));
-    for (int i = 0; i < n_nodes; i++)
-        rank[i] = i;
-    parent = malloc(n_nodes * sizeof(int));
-    for (int i = 0; i < n_nodes; i++)
-        parent[i] = -1;
-
-    quicksort(E, 0, n_edges - 1);
-
-    int vertice_origem, vertice_destino, origem, destino, custo;
-
-    for (int n_edge = 0; n_edge < n_edges; n_edge++)
-    {
-        if (MST->nb_edges == (n_edges - 1))
-            break;
-
-        vertice_origem = E[n_edge]._origem;
-        vertice_destino = E[n_edge]._destino;
-        custo = E[n_edge]._custo;
-
-        origem = _find(parent, vertice_origem);
-        destino = _find(parent, vertice_destino);
-
-        if (origem != destino)
-        {
-            _union_by_rank(origem, destino, parent, rank);
-            MST->arestas[MST->nb_edges++] = E[n_edge];
-            MST->_custo += E[n_edge]._custo;
+    for (int i = 0; i < n_nodes; i++) {
+        if (simple_parent[i] == x) {
+            simple_parent[i] = y;
         }
     }
 }
 
 void kruskal_union_find(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int n_edges)
 {
+    // makeset
+    MST->ms_time_i = get_time_in_seconds();
     simple_makeSet(n_nodes);
-    quicksort(E, 0, n_edges - 1); // O(log E)
-    for (int n_edge = 0; n_edge < n_edges; n_edge++) // O(E)
+    // quicksort
+    MST->qs_time_i = get_time_in_seconds();
+    qsort((Aresta *)E, n_edges, sizeof(Aresta), qsort_aresta_custo);
+    // union-find
+    MST->uf_time_i = get_time_in_seconds();
+    for (int n_edge = 0; n_edge < n_edges; n_edge++)
     {
-        
+        int origem  = simple_find(E[n_edge]._origem);
+        int destino = simple_find(E[n_edge]._destino);
+        if (origem != destino)
+        {
+            simple_union(n_nodes, origem, destino);
+            MST->arestas[MST->nb_edges++] = E[n_edge];
+            MST->_custo += E[n_edge]._custo;
+        }
+    }
+    MST->time_f = get_time_in_seconds();
+}
+
+void better_makeSet(int n_nodes)
+{
+    better_rank = malloc(n_nodes * sizeof(int));
+    for (int i = 0; i < n_nodes; i++)
+        better_rank[i] = 0;
+    better_parent = malloc(n_nodes * sizeof(int));
+    for (int i = 0; i < n_nodes; i++) {
+        better_parent[i] = i;
     }
 }
 
-// O(E log E)
-void kruskal_union_find_ex(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int n_edges)
+int better_find(int i)
 {
-    parent = malloc(n_nodes * sizeof(int));
-    disjointSet_makeSet(parent, n_nodes); // O(n)
+    if (better_parent[i] == i) return i;
+    return better_find(better_parent[i]);
+}
 
-    quicksort(E, 0, n_edges - 1); // O(log E)
-
-    int vertice_origem, vertice_destino, origem, destino, custo;
-
-    for (int n_edge = 0; n_edge < n_edges; n_edge++) // O(E)
+void better_union(int x, int y)
+{
+    if (better_rank[x] > better_rank[y])
+        better_parent[y] = x;
+    else
     {
-        if (MST->nb_edges == (n_edges - 1))
-            break;
+        better_parent[x] = y;
+        if (better_rank[x] == better_rank[y])
+            better_rank[y]++;
+    }
+}
 
-        origem = disjointSet_find(parent, E[n_edge]._origem);
-        destino = disjointSet_find(parent, E[n_edge]._destino);
-
+void kruskal_union_by_rank(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int n_edges)
+{
+    // makeset
+    MST->ms_time_i = get_time_in_seconds();
+    better_makeSet(n_nodes);
+    // quicksort
+    MST->qs_time_i = get_time_in_seconds();
+    qsort((Aresta *)E, n_edges, sizeof(Aresta), qsort_aresta_custo);
+    // union by rank
+    MST->uf_time_i = get_time_in_seconds();
+    for (int n_edge = 0; n_edge < n_edges; n_edge++)
+    {
+        int origem  = better_find(E[n_edge]._origem);
+        int destino = better_find(E[n_edge]._destino);
         if (origem != destino)
         {
+            better_union(origem, destino);
             MST->arestas[MST->nb_edges++] = E[n_edge];
             MST->_custo += E[n_edge]._custo;
-            disjointSet_union(parent, origem, destino);
         }
     }
+    MST->time_f = get_time_in_seconds();
+
 }
 
 int nb_header = 0;
@@ -327,12 +289,10 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
         double delta_1 = 0;
         { // union-find
             double soma = 0;
-            int total = 0;
-            for (int turn = 0; turn < TURNS; turn++)
+            for (int turn = 0; turn < (TURNS + GAP); turn++)
             {
                 MST->arestas = (Aresta*)malloc((nb_edges-1)*sizeof(Aresta));
                 MST->nb_edges = 0;
-                MST->nb_nodes = 0;
                 MST->_custo = 0;
 
                 // -> COPIAR ARESTAS
@@ -357,21 +317,23 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
                 dataset[nb_dataset].grafos[nb_graph].end = get_time_in_seconds();
                 // kruskal union-find <-
                 total = MST->_custo;
-                double delta = (dataset[nb_dataset].grafos[nb_graph].end - dataset[nb_dataset].grafos[nb_graph].start);
-                soma += delta;
-                free(parent);
+                // double delta = (dataset[nb_dataset].grafos[nb_graph].end - dataset[nb_dataset].grafos[nb_graph].start);
+                double delta = (MST->time_f - MST->uf_time_i);
+                if (turn >= GAP) soma += delta;
+                free(simple_parent);
                 free(arestas);
             }
             delta_1 = soma / TURNS;
         }
         double delta_2 = 0;
+        total = 0;
+        //*
         { // union-by-rank
             double soma = 0;
-            for (int turn = 0; turn < TURNS; turn++)
+            for (int turn = 0; turn < (TURNS + GAP); turn++)
             {
                 MST->arestas = (Aresta*)malloc((nb_edges-1)*sizeof(Aresta));
                 MST->nb_edges = 0;
-                MST->nb_nodes = 0;
                 MST->_custo = 0;
 
                 Aresta *arestas = (Aresta *)malloc(nb_edges * sizeof(Aresta));
@@ -393,14 +355,16 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
                 );
                 dataset[nb_dataset].grafos[nb_graph].end = get_time_in_seconds();
                 total = MST->_custo;
-                double delta = (dataset[nb_dataset].grafos[nb_graph].end - dataset[nb_dataset].grafos[nb_graph].start);
-                soma += delta;
-                free(rank);
-                free(parent);
+                // double delta = (dataset[nb_dataset].grafos[nb_graph].end - dataset[nb_dataset].grafos[nb_graph].start);
+                double delta = (MST->time_f - MST->uf_time_i);
+                if (turn >= GAP) soma += delta;
+                free(better_rank);
+                free(better_parent);
                 free(arestas);
             }
             delta_2 = soma / TURNS;
         }
+        // */
 
         double mlogn = dataset[nb_dataset].grafos[nb_graph].nb_edges * log10(dataset[nb_dataset].grafos[nb_graph].nb_nodes);
 
