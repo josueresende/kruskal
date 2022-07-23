@@ -1,10 +1,11 @@
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
 #include <math.h>
 #define TURNS 5
-#define GAP 2
+#define GAP 0
 #define DEBUG 0
 typedef struct ARESTA
 {
@@ -13,6 +14,11 @@ typedef struct ARESTA
     int _custo;
 } Aresta;
 
+typedef struct SUBSET
+{
+    int parent;
+    int rank;
+} SubSet;
 typedef struct GRAPH
 {
     int nb_edges; // arestas
@@ -37,10 +43,8 @@ typedef struct DATASET
     int nb_graphs;
 } Dataset;
 
-int simple_parent[1000];
-
-int better_parent[1000];
-int   better_rank[1000];
+int    simple_parent[1000];
+SubSet better_subset[1000];
 
 double get_time_in_seconds()
 {
@@ -190,6 +194,13 @@ void quicksort(Aresta *A, int x, int y) // O(log n)
     quicksort(A, q + 1, y);
 }
 
+int qsort_compare_aresta(const void * a, const void * b)
+{
+  Aresta *A = (Aresta *)a;
+  Aresta *B = (Aresta *)b;
+  return (A->_custo - B->_custo);
+}
+
 void simple_makeSet(int n_nodes) // O(n)
 {
     for (int i = 0; i < n_nodes; i++) {
@@ -220,6 +231,7 @@ void kruskal_union_find(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int n_
     // quicksort
     MST->qs_time_i = get_time_in_seconds();
     quicksort(E, 0, n_edges - 1);
+    // qsort (E, n_edges - 1, sizeof(Aresta), qsort_compare_aresta);
     // union-find
     MST->uf_time_i = get_time_in_seconds();
     for (int n_edge = 0; n_edge < n_edges; n_edge++)
@@ -238,31 +250,30 @@ void kruskal_union_find(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int n_
 
 void better_makeSet(int n_nodes)
 {
-    for (int i = 0; i < n_nodes; i++)
-        better_rank[i] = 0;
     for (int i = 0; i < n_nodes; i++) {
-        better_parent[i] = i;
+        better_subset[i].parent = i;
+        better_subset[i].rank   = 0;
     }
 }
 
 int better_find(int i)
 {
-    if (better_parent[i] != i) {
-        return better_find(better_parent[i]);
+    if (better_subset[i].parent != i) {
+        return better_find(better_subset[i].parent);
     }
-    return better_parent[i];
+    return better_subset[i].parent;
 }
 
 void better_union(int x, int y)
 {
-    if (better_rank[x] > better_rank[y])
-        better_parent[y] = x;
-    else if (better_rank[x] < better_rank[y])
-        better_parent[x] = y;
+    if (better_subset[x].rank > better_subset[y].rank)
+        better_subset[y].parent = x;
+    else if (better_subset[x].rank < better_subset[y].rank)
+        better_subset[x].parent = y;
     else 
     {
-        better_parent[x] = y;
-        better_rank[y]++;
+        better_subset[x].parent = y;
+        better_subset[y].rank++;
     }
 }
 
@@ -274,6 +285,7 @@ void kruskal_union_by_rank(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int
     // quicksort
     MST->qs_time_i = get_time_in_seconds();
     quicksort(E, 0, n_edges - 1);
+    // qsort (E, n_edges - 1, sizeof(Aresta), qsort_compare_aresta);
     // union by rank
     MST->uf_time_i = get_time_in_seconds();
     for (int n_edge = 0; n_edge < n_edges; n_edge++)
@@ -303,7 +315,7 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
         int nb_edges = dataset.grafos[nb_graph].nb_edges;
 
         MinimumSpanningTree MST;
-        MST.arestas = (Aresta*)malloc((nb_edges-1)*sizeof(Aresta));
+        MST.arestas = (Aresta*)malloc((nb_edges)*sizeof(Aresta));
 
         double delta_1 = 0;
         int    custo_1 = 0;
