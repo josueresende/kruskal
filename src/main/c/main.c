@@ -3,8 +3,8 @@
 #include <time.h>
 #include <string.h>
 #include <math.h>
-#define TURNS 3
-#define GAP 0
+#define TURNS 5
+#define GAP 2
 #define DEBUG 0
 typedef struct ARESTA
 {
@@ -42,25 +42,15 @@ int simple_parent[1000];
 int better_parent[1000];
 int   better_rank[1000];
 
+double get_time_in_seconds()
+{
+    struct timespec t;
 #ifdef _WIN32
-double get_time_in_seconds_platform()
-{
-    struct timespec t;
-    clock_gettime(CLOCK_REALTIME, &t);
-    return (double)t.tv_sec + (1.0e-9 * t.tv_nsec);
-}
+    clock_gettime(CLOCK_MONOTONIC, &t);
 #else
-double get_time_in_seconds_platform()
-{
-    struct timespec t;
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t);
-    return (double)t.tv_sec + (1.0e-9 * t.tv_nsec);
-}
 #endif
-
-double get_time_for_scale()
-{
-    return get_time_in_seconds_platform();
+    return (double)t.tv_sec + (1.0e-9 * t.tv_nsec);
 }
 
 int compare(const char *left, char *right)
@@ -220,13 +210,13 @@ void simple_union(int n_nodes, int x, int y) // O(n)
 void kruskal_union_find(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int n_edges)
 {
     // makeset
-    MST->ms_time_i = get_time_for_scale();
+    MST->ms_time_i = get_time_in_seconds();
     simple_makeSet(n_nodes);
     // quicksort
-    MST->qs_time_i = get_time_for_scale();
+    MST->qs_time_i = get_time_in_seconds();
     quicksort(E, 0, n_edges - 1);
     // union-find
-    MST->uf_time_i = get_time_for_scale();
+    MST->uf_time_i = get_time_in_seconds();
     for (int n_edge = 0; n_edge < n_edges; n_edge++)
     {
         int origem  = simple_find(E[n_edge]._origem);
@@ -238,7 +228,7 @@ void kruskal_union_find(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int n_
             MST->_custo += E[n_edge]._custo;
         }
     }
-    MST->time_f = get_time_for_scale();
+    MST->time_f = get_time_in_seconds();
 }
 
 void better_makeSet(int n_nodes)
@@ -274,13 +264,13 @@ void better_union(int x, int y)
 void kruskal_union_by_rank(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int n_edges)
 {
     // makeset
-    MST->ms_time_i = get_time_for_scale();
+    MST->ms_time_i = get_time_in_seconds();
     better_makeSet(n_nodes);
     // quicksort
-    MST->qs_time_i = get_time_for_scale();
+    MST->qs_time_i = get_time_in_seconds();
     quicksort(E, 0, n_edges - 1);
     // union by rank
-    MST->uf_time_i = get_time_for_scale();
+    MST->uf_time_i = get_time_in_seconds();
     for (int n_edge = 0; n_edge < n_edges; n_edge++)
     {
         int origem  = better_find(E[n_edge]._origem);
@@ -292,7 +282,7 @@ void kruskal_union_by_rank(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int
             MST->_custo += E[n_edge]._custo;
         }
     }
-    MST->time_f = get_time_for_scale();
+    MST->time_f = get_time_in_seconds();
 
 }
 
