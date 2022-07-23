@@ -186,7 +186,7 @@ int quicksort_dividir(Aresta *A, int x, int y)
     quicksort_troca(&A[y], &A[p]);
     return p;
 }
-void quicksort(Aresta *A, int x, int y)
+void quicksort(Aresta *A, int x, int y) // O(log n)
 {
     if (x >= y)
         return;
