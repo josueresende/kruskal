@@ -3,8 +3,8 @@
 #include <time.h>
 #include <string.h>
 #include <math.h>
-#define TURNS 5
-#define GAP 2
+#define TURNS 3
+#define GAP 0
 #define DEBUG 0
 typedef struct ARESTA
 {
@@ -28,7 +28,7 @@ typedef struct MST
     double qs_time_i; // marcador tempo
     double uf_time_i; // marcador tempo
     double time_f; // marcador tempo
-    Aresta arestas[10000];
+    Aresta *arestas;
 } MinimumSpanningTree;
 
 typedef struct DATASET
@@ -37,10 +37,10 @@ typedef struct DATASET
     int nb_graphs;
 } Dataset;
 
-int simple_parent[100];
+int simple_parent[1000];
 
-int better_parent[100];
-int better_rank[100];
+int better_parent[1000];
+int   better_rank[1000];
 
 #ifdef _WIN32
 double get_time_in_seconds_platform()
@@ -139,7 +139,6 @@ Dataset abrir(char *nomeDoArquivo)
             else if (compare("NB_GRAPHS", buffer) == 0)
             {
                 dataset.nb_graphs = atoi(strdup(buffer + 10));
-                // (*dataset).grafos = (Graph *)malloc((*dataset).nb_graphs * sizeof(Graph));
                 nb_graph = -1;
             }
             else if (compare("NB_NODES", buffer) == 0)
@@ -196,9 +195,8 @@ void quicksort(Aresta *A, int x, int y)
     quicksort(A, q + 1, y);
 }
 
-void simple_makeSet(int n_nodes)
+void simple_makeSet(int n_nodes) // O(n)
 {
-    // simple_parent = malloc(n_nodes * sizeof(int));
     for (int i = 0; i < n_nodes; i++) {
         simple_parent[i] = i;
     }
@@ -206,16 +204,11 @@ void simple_makeSet(int n_nodes)
 
 int simple_find(int i) // O(1)
 {
-    // if (simple_parent[i] == -1) return i;
-    // return simple_find(simple_parent[i]);
     return simple_parent[i];
 }
 
 void simple_union(int n_nodes, int x, int y) // O(n)
 {
-    // int xset = simple_find(x);
-    // int yset = simple_find(y);
-    // simple_parent[xset] = yset;
     for (int n_node = 0; n_node < n_nodes; n_node++)
     {
         if (simple_parent[n_node] == x) {
@@ -250,10 +243,8 @@ void kruskal_union_find(MinimumSpanningTree *MST, Aresta *E, int n_nodes, int n_
 
 void better_makeSet(int n_nodes)
 {
-    // better_rank = malloc(n_nodes * sizeof(int));
     for (int i = 0; i < n_nodes; i++)
         better_rank[i] = 0;
-    // better_parent = malloc(n_nodes * sizeof(int));
     for (int i = 0; i < n_nodes; i++) {
         better_parent[i] = i;
     }
@@ -317,9 +308,10 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
         int nb_edges = dataset.grafos[nb_graph].nb_edges;
 
         MinimumSpanningTree MST;
+        MST.arestas = (Aresta*)malloc((nb_edges-1)*sizeof(Aresta));
 
-        int total = 0;
         double delta_1 = 0;
+        int    custo_1 = 0;
         // /*
         { // union-find
             double soma = 0;
@@ -346,7 +338,7 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
                     dataset.grafos[nb_graph].nb_edges
                 );
 
-                total = MST._custo;
+                custo_1 = MST._custo;
 
                 double delta = (MST.time_f - MST.ms_time_i);
                 if (turn >= GAP) soma += delta;
@@ -365,8 +357,7 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
         }
         // */
         double delta_2 = 0;
-        // total = 0;
-        // /*
+        int    custo_2 = 0;
         { // union-by-rank
             double soma = 0;
             for (int turn = 0; turn < (TURNS + GAP); turn++)
@@ -391,12 +382,10 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
                     dataset.grafos[nb_graph].nb_edges
                 );
 
-                // total = MST._custo;
+                custo_2 = MST._custo;
 
                 double delta = (MST.time_f - MST.ms_time_i);
                 if (turn >= GAP) soma += delta;
-                // free(better_rank);
-                // free(better_parent);
                 free(arestas);
             }
             delta_2 = soma / TURNS;
@@ -411,6 +400,7 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
             }
         }
         // */
+        free(MST.arestas);
 
         double mlogn = dataset.grafos[nb_graph].nb_edges * log10(dataset.grafos[nb_graph].nb_nodes);
 
@@ -438,7 +428,7 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
             delta_1,
             delta_2,
             mlogn,
-            total
+            (custo_1 != custo_2 ? 0 : custo_1)
         );
         fprintf(arq, "\"%s_%d_%d\", %d, %d, %f, %f, %f, %d \n",  
             nomeDaInstancia, 
@@ -449,11 +439,10 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
             delta_1,
             delta_2,
             mlogn,
-            total
+            (custo_1 != custo_2 ? 0 : custo_1)
         );
         fclose(arq);
     }
-    // free(dataset);
 }
 
 int main()
