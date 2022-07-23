@@ -33,7 +33,7 @@ typedef struct MST
 
 typedef struct DATASET
 {
-    Graph grafos[10];
+    Graph *grafos;
     int nb_graphs;
 } Dataset;
 
@@ -108,7 +108,8 @@ Dataset abrir(char *nomeDoArquivo)
                 }
                 reffub[++j] = 0;
                 numero = strtok(reffub, " ");
-                Aresta *aresta = dataset.grafos[nb_graph].arestas + nb_edge++;
+                Graph *grafo = dataset.grafos + nb_graph;
+                Aresta *aresta = (*grafo).arestas + nb_edge++;
                 for (int i = 0; i < 3; i++)
                 {
                     if (numero == NULL)
@@ -129,21 +130,25 @@ Dataset abrir(char *nomeDoArquivo)
             else if (compare("NB_GRAPHS", buffer) == 0)
             {
                 dataset.nb_graphs = atoi(strdup(buffer + 10));
+                dataset.grafos = (Graph *)malloc(dataset.nb_graphs * sizeof(Graph));
                 nb_graph = -1;
             }
             else if (compare("NB_NODES", buffer) == 0)
             { // total de vertices
-                dataset.grafos[nb_graph].nb_nodes = atoi(strdup(buffer + 10));
+                Graph *grafo = dataset.grafos + nb_graph;
+                (*grafo).nb_nodes = atoi(strdup(buffer + 10));
             }
             else if (compare("NB_EDGES", buffer) == 0)
             { // total de arestas
-                dataset.grafos[nb_graph].nb_edges = atoi(strdup(buffer + 10));
+                Graph *grafo = dataset.grafos + nb_graph;
+                (*grafo).nb_edges = atoi(strdup(buffer + 10));
             }
             else if (compare("LIST_OF_EDGES", buffer) == 0)
             { // inicia a entrada dados
-                int nb_nodes = dataset.grafos[nb_graph].nb_nodes;
-                int nb_edges = dataset.grafos[nb_graph].nb_edges;
-                dataset.grafos[nb_graph].arestas = (Aresta *)malloc(nb_edges * sizeof(Aresta));
+                Graph *grafo = dataset.grafos + nb_graph;
+                int nb_nodes = (*grafo).nb_nodes;
+                int nb_edges = (*grafo).nb_edges;
+                (*grafo).arestas = (Aresta *)malloc(nb_edges * sizeof(Aresta));
                 nb_edge = 0;
                 flag_input = 1;
             }
