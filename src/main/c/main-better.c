@@ -47,7 +47,7 @@ double get_time_in_seconds_platform()
 {
     struct timespec t;
     clock_gettime(CLOCK_REALTIME, &t);
-    return (double)t.tv_sec + (1.0e-9 * t.tv_nsec);
+    return (double)t.tv_sec + (1.0e-6 * t.tv_nsec);
 }
 #else
 double get_time_in_seconds_platform()
@@ -326,53 +326,7 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
 
         int total = 0;
         double delta_1 = 0;
-        // /*
-        { // union-find
-            double soma = 0;
-            for (int turn = 0; turn < (TURNS + GAP); turn++)
-            {
-                MST->nb_edges = 0;
-                MST->_custo = 0;
-
-                // -> COPIAR ARESTAS
-                Aresta *arestas = (Aresta *)malloc(nb_edges * sizeof(Aresta));
-                for (int nb_edge = 0; nb_edge < nb_edges; nb_edge++) 
-                {
-                    Aresta *aresta_o = dataset[nb_dataset].grafos[nb_graph].arestas + nb_edge;
-                    Aresta *aresta_d = arestas + nb_edge;
-                    (*aresta_d)._origem = (*aresta_o)._origem;
-                    (*aresta_d)._destino = (*aresta_o)._destino;
-                    (*aresta_d)._custo = (*aresta_o)._custo;
-                }
-
-                kruskal_union_find(
-                    MST,
-                    arestas,
-                    dataset[nb_dataset].grafos[nb_graph].nb_nodes,
-                    dataset[nb_dataset].grafos[nb_graph].nb_edges
-                );
-
-                total = MST->_custo;
-
-                double delta = (MST->time_f - MST->ms_time_i);
-                if (turn >= GAP) soma += delta;
-                // free(simple_parent);
-                free(arestas);
-            }
-            delta_1 = soma / TURNS;
-            if (DEBUG == 1) 
-            {
-                printf("%s MST SIMPLE ", nomeDaInstancia);
-                for (int n_edge = 0; n_edge < MST->nb_edges; n_edge++)
-                {
-                    printf("%d-%d=%d | ", MST->arestas[n_edge]._origem, MST->arestas[n_edge]._destino, MST->arestas[n_edge]._custo);
-                }
-                printf("CUSTO=%d \n", MST->_custo);
-            }
-        }
-        // */
         double delta_2 = 0;
-        // total = 0;
         // /*
         { // union-by-rank
             double soma = 0;
@@ -398,7 +352,7 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
                     dataset[nb_dataset].grafos[nb_graph].nb_edges
                 );
 
-                // total = MST->_custo;
+                total = MST->_custo;
 
                 double delta = (MST->time_f - MST->ms_time_i);
                 if (turn >= GAP) soma += delta;
