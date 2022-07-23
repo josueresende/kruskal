@@ -266,6 +266,8 @@ int better_find(int i)
 
 void better_union(int x, int y)
 {
+    x = better_find(x);
+    y = better_find(y);
     if (better_subset[x].rank > better_subset[y].rank)
         better_subset[y].parent = x;
     else if (better_subset[x].rank < better_subset[y].rank)
