@@ -462,8 +462,8 @@ int main()
 
     if (DEBUG == 1) {
         int i = 3;
-        sprintf(nomeDoArquivo, "resource/inst_test%d.dat", i);
-        sprintf(nomeDaInstancia, "teste%d", i);
+        sprintf(nomeDoArquivo, "resource/inst_teste.dat");
+        sprintf(nomeDaInstancia, "GrafoCompleto_teste");
         run(nomeDoArquivo, nomeDaInstancia);
     } else {
         for (int i = 1; i <= 10; i++)
