@@ -5,7 +5,6 @@
 #include <string.h>
 #include <math.h>
 #define TURNS 5
-#define GAP 0
 #define DEBUG 0
 typedef struct ARESTA
 {
@@ -313,7 +312,7 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
         // /*
         { // union-find
             double soma = 0;
-            for (int turn = 0; turn < (TURNS + GAP); turn++)
+            for (int turn = 0; turn < TURNS; turn++)
             {
                 MST.nb_edges = 0;
                 MST._custo = 0;
@@ -339,7 +338,7 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
                 custo_1 = MST._custo;
 
                 double delta = (MST.time_f - MST.ms_time_i);
-                if (turn >= GAP) soma += delta;
+                soma += delta;
                 free(arestas);
             }
             delta_1 = soma / TURNS;
@@ -358,7 +357,7 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
         int    custo_2 = 0;
         { // union-by-rank
             double soma = 0;
-            for (int turn = 0; turn < (TURNS + GAP); turn++)
+            for (int turn = 0; turn < TURNS; turn++)
             {
                 MST.nb_edges = 0;
                 MST._custo = 0;
@@ -383,7 +382,7 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
                 custo_2 = MST._custo;
 
                 double delta = (MST.time_f - MST.ms_time_i);
-                if (turn >= GAP) soma += delta;
+                soma += delta;
                 free(arestas);
             }
             delta_2 = soma / TURNS;
@@ -400,6 +399,7 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
         // */
         free(MST.arestas);
 
+        double n2mlogn = (dataset.grafos[nb_graph].nb_nodes ^ 2) + (dataset.grafos[nb_graph].nb_edges * log10(dataset.grafos[nb_graph].nb_nodes));
         double mlogn = dataset.grafos[nb_graph].nb_edges * log10(dataset.grafos[nb_graph].nb_nodes);
 
         FILE *arq;
@@ -409,15 +409,16 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
         char titulo3[50] = "m";
         char titulo4[50] = "tempo - union-find";
         char titulo5[50] = "tempo - union-by-rank";
-        char titulo6[50] = "O(m log n)";
-        char titulo7[50] = "Solucao";
+        char titulo6[50] = "O(n^2 + (m log n))";
+        char titulo7[50] = "O(m log n)";
+        char titulo8[50] = "Solucao";
 
         if (nb_header++ == 0) {
-            fprintf(arq, "%s, %s, %s, %s, %s, %s, %s\n", titulo1, titulo2, titulo3, titulo4, titulo5, titulo6, titulo7);
-            printf("\"instancia\", \"n\", \"m\", \"tempo - union-find\", \"tempo - union-by-rank\", \"O(m log n)\", \"solucao\"\n");
+            fprintf(arq, "%s, %s, %s, %s, %s, %s, %s, %s\n", titulo1, titulo2, titulo3, titulo4, titulo5, titulo6, titulo7, titulo8);
+            printf("%s, %s, %s, %s, %s, %s, %s, %s\n", titulo1, titulo2, titulo3, titulo4, titulo5, titulo6, titulo7, titulo8);
         }
 
-        printf("\"%s_%d_%d\", %d, %d, %f, %f, %f, %d \n",
+        printf("\"%s_%d_%d\", %d, %d, %f, %f, %f, %f, %d \n",
             nomeDaInstancia,
             dataset.nb_graphs,
             (nb_graph + 1),
@@ -425,10 +426,11 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
             dataset.grafos[nb_graph].nb_edges,
             delta_1,
             delta_2,
+            n2mlogn,
             mlogn,
             (custo_1 != custo_2 ? 0 : custo_1)
         );
-        fprintf(arq, "\"%s_%d_%d\", %d, %d, %f, %f, %f, %d \n",  
+        fprintf(arq, "\"%s_%d_%d\", %d, %d, %f, %f, %f, %f, %d \n",  
             nomeDaInstancia, 
             dataset.nb_graphs, 
             (nb_graph + 1), 
@@ -436,6 +438,7 @@ void run(char *nomeDoArquivo, char *nomeDaInstancia)
             dataset.grafos[nb_graph].nb_edges, 
             delta_1,
             delta_2,
+            n2mlogn,
             mlogn,
             (custo_1 != custo_2 ? 0 : custo_1)
         );
